@@ -1,6 +1,6 @@
 # Modders-Batch-Tool
 * Utility toolkits to do a lot of repetitive operations automatically for modders, mainly used for mmd models.
-* Now it supports **MonsterHunterWorld**, **MonsterHunterRise** and **GranblueFantasyRelink**.
+* Now it supports **MonsterHunterWorld**, **MonsterHunterRise** and **MonsterHunterWilds**.
 * It has the Chinese translation.
   
 # Documentation
@@ -9,7 +9,7 @@ Considering creating an instruction document. Most of the functions have been ma
 # Installation
 1. Download this addon;
 2. Go to File > User Preferences > Addons in Blender;
-3. Click on Install Add-on from File, then choose Modders-Batch-Tool.zip archive;
+3. Click on Install Add-on from File, then choose Modder-Batch-Tool.zip archive;
 4. If the installation is successful, you can see it in the sidebar in blender (**shortcut key:N**).
 
 # Quickly start 
