@@ -6,6 +6,9 @@
 # Documentation
 Considering creating an instruction document. Most of the functions have been marked on the addon panel.
 
+# Requirements
+* [Blender 2.93 or higher](https://www.blender.org/download/)
+
 # Installation
 1. Download this addon;
 2. Go to File > User Preferences > Addons in Blender;
