@@ -2,7 +2,7 @@
 
 # Modder-Batch-Tool
 * Utility toolkits to do a lot of repetitive operations automatically for modders, mainly used for mmd models.
-* Now it supports **MonsterHunterWorld**, **MonsterHunterRise** and **MonsterHunterWilds**.
+* Now it supports **MonsterHunterWorld**, **MonsterHunterRise** and **MonsterHunterWilds**.（目前只支持荒野，等待崛起和世界部分的功能重写完毕再合并到一起）
 * It has the Chinese translation.
   
 # Documentation
