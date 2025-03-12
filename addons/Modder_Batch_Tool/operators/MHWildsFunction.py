@@ -5,11 +5,16 @@ import os
 import math
 import re
 import copy
+
+from bpy_extras.io_utils import ExportHelper
 from mathutils import Vector, Euler, Matrix
 
+from .file.MHWilds.fbxskel.fbxskel_loader import load_fbxskel
+from .file.MHWilds.fbxskel.fbxskel_writer import export_fbxskel, write_fbxskel
 from ..config import __addon_name__
 from ..preference.AddonPreferences import MBTAddonPreferences
-
+import logging
+logger = logging.getLogger("mhwilds_fbxskel")
 
 def set_bone_scale(armature_name, scale_value):
     armature = bpy.data.objects.get(armature_name)
@@ -20,7 +25,7 @@ def set_bone_scale(armature_name, scale_value):
             bone.length = scale_value
         bpy.ops.object.mode_set(mode='OBJECT')
 
-FemaleMesh = os.path.join(os.path.dirname(os.path.split(os.path.abspath(__file__))[0]), "operators/file/MHWilds/MHWilds_Female.fbx")
+FemaleMesh = os.path.join(os.path.dirname(os.path.split(os.path.abspath(__file__))[0]), "operators/file/MHWilds/model/MHWilds_Female.fbx")
 class importMHWildsfmesh(bpy.types.Operator):
     bl_idname = "mbt.import_mhwilds_fmesh"
     bl_label = "female mesh"
@@ -400,15 +405,15 @@ def copy_bone_matrices(armature_a_name, armature_b_name):
     # print("骨架 B 的骨骼矩阵已更新。")
 
 
-FemaleFbxskelMesh = os.path.join(os.path.dirname(os.path.split(os.path.abspath(__file__))[0]), "operators/file/MHWilds/MHWilds_Female_Fbxskel.fbx")
-class MHWildsfbxskel(bpy.types.Operator):
-    bl_idname = "mbt.mhwilds_fbxskel"
+FemaleFbxskelMesh = os.path.join(os.path.dirname(os.path.split(os.path.abspath(__file__))[0]), "operators/file/MHWilds/model/ch03_000_9000.fbxskel.7")
+class Generatefbxskel(bpy.types.Operator):
+    bl_idname = "mbt.generate_fbxskel"
     bl_label = "generate fbxskel"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
-        if bpy.context.selected_objects is not None:
+        if bpy.context.selected_objects is not None and len(bpy.context.selected_objects) == 1:
             for obj in bpy.context.selected_objects:
                 return obj.type == "ARMATURE"
 
@@ -434,10 +439,14 @@ class MHWildsfbxskel(bpy.types.Operator):
             ['L_Knee', 'L_KneeDouble_HJ_00'],
             ['R_Knee', 'R_KneeDouble_HJ_00'],
         ]
+        bpy.ops.object.mode_set(mode='OBJECT')
         ArmatureName0 = bpy.context.active_object.name
+        bpy.ops.object.select_all(action='DESELECT')
 
-        bpy.ops.import_scene.fbx(filepath=FemaleFbxskelMesh, use_custom_props=True, force_connect_children=False)
-        ArmatureObj = bpy.context.active_object
+        # bpy.ops.import_scene.fbx(filepath=FemaleFbxskelMesh, use_custom_props=True, force_connect_children=False)
+        ArmatureObj = load_fbxskel(FemaleFbxskelMesh, collection=None, fix_rotation=True)
+        ArmatureObj.select_set(True)
+        # ArmatureObj = bpy.context.active_object
         ArmatureName1 = ArmatureObj.name
         ArmatureName = ArmatureObj.data.name
         bpy.ops.object.mode_set(mode='EDIT')
@@ -469,3 +478,47 @@ class MHWildsfbxskel(bpy.types.Operator):
 
         self.report({'INFO'}, 'generation completed')
         return {'FINISHED'}
+
+
+class Exportfbxskel(bpy.types.Operator, ExportHelper):
+    bl_idname = "mbt.export_fbxskel"
+    bl_label = 'export fbxskel'
+    bl_options = {'PRESET', "REGISTER", "UNDO"}
+    filename_ext = ".7"
+    # filter_glob: bpy.props.StringProperty(default="*.fbxskel", options={'HIDDEN'})
+
+    @classmethod
+    def poll(cls, context):
+        if bpy.context.selected_objects is not None and len(bpy.context.selected_objects) == 1:
+            for obj in bpy.context.selected_objects:
+                return obj.type == "ARMATURE"
+
+    def invoke(self, context, event):
+        fbxskel_armature = bpy.context.active_object
+        if ".fbxskel" in fbxskel_armature.name:
+            self.filepath = fbxskel_armature.name.split(".fbxskel")[0] + ".fbxskel.7"
+            print(self.filepath)
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+    def execute(self, context):
+        selected_objects = bpy.context.selected_objects
+        beware = False
+        try:
+            bone_infos, beware_export = export_fbxskel(selected_objects)
+            data, beware_write = write_fbxskel(bone_infos)
+            with open(self.filepath, "wb") as file_out:
+                file_out.write(data)
+            beware = beware_export or beware_write
+        except Exception as e:
+            self.report({"ERROR"}, "Could not export fbxskel, reason = " + str(e))
+            import traceback
+            traceback.print_exc()
+            return {"CANCELLED"}
+        if beware:
+            logger.warning("Export to " + self.filepath + " done, but warning were generated: make sure everything went correctly by checking the system console, found in Window->Toggle System Console")
+            self.report({"WARNING"}, "Export done, but warning were generated: make sure everything went correctly by checking the system console, found in Window->Toggle System Console")
+        else:
+            logger.info("Export to " + self.filepath + " completed! ")
+            self.report({"INFO"}, "export completed")
+        return {"FINISHED"}
