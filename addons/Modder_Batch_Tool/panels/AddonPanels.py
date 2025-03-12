@@ -122,9 +122,10 @@ class MBTMHWilds(bpy.types.Panel):
         row = layout.row()
         row.operator("mbt.rename_mesh_to_reformat", icon="OUTLINER_DATA_MESH")
 
-        layout.label(text="Generate fbxskel")
+        layout.label(text="Generate or export fbxskel")
         row = layout.row()
-        row.operator("mbt.mhwilds_fbxskel", icon="OUTLINER_OB_ARMATURE")
+        row.operator("mbt.generate_fbxskel", icon="OUTLINER_OB_ARMATURE")
+        row.operator("mbt.export_fbxskel", icon="OUTLINER_OB_ARMATURE")
 
 
 
