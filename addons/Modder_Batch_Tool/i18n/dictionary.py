@@ -79,8 +79,9 @@ dictionary = {
         ("Operator", "male armature"): "男性骨架",
         ("*", "Batch rename meshes to re format"): "批量重命名网格名为RE格式",
         ("Operator", "rename meshes"): "重命名网格名",
-        ("*", "Generate fbxskel"): "生成骨架对应的fbxskel",
+        ("*", "Generate or export fbxskel"): "生成或导出骨架对应的fbxskel",
         ("Operator", "generate fbxskel"): "生成fbxskel",
+        ("Operator", "export fbxskel"): "导出fbxskel",
 
 
 
