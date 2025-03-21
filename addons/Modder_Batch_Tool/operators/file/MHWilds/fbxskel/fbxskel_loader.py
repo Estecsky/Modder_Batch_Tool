@@ -34,7 +34,7 @@ def load_fbxskel(filepath, collection = None, fix_rotation=False, obj_name="", c
 
     armature_data = bpy.data.armatures.new(armature_name)
     armature_object = bpy.data.objects.new(armature_name, armature_data)
-    armature_object.show_in_front = True
+    # armature_object.show_in_front = True
     armature_object.rotation_mode = "XYZ"
     if fix_rotation:
         armature_object.rotation_euler.rotate(Euler([math.radians(90),0,0]))

@@ -291,3 +291,25 @@ def operator_exists(idname):
         return True
     except:
         return False
+
+
+#从Blender数据中获取指定的骨架对象
+def findArmatureObjFromData(armatureData):
+    armatureObj = None
+    for obj in bpy.context.scene.objects:
+        if obj.type == "ARMATURE" and obj.data == armatureData:
+            armatureObj = obj
+            break
+    return armatureObj
+
+#根据提供的集合名称（collectionName）获取对应的集合
+#参数：collectionName（要获取或创建的集合的名称），parentCollection（表示新集合的父集合，默认为None，即没有父集合），makeNew（布尔值，指定当集合不存在时是否创建新集合，默认为False）
+def getCollection(collectionName,parentCollection = None,makeNew = False):
+    if makeNew or not bpy.data.collections.get(collectionName):
+        collection = bpy.data.collections.new(collectionName)
+        collectionName = collection.name
+        if parentCollection != None:
+            parentCollection.children.link(collection)
+        else:
+            bpy.context.scene.collection.children.link(collection)
+    return bpy.data.collections[collectionName]
