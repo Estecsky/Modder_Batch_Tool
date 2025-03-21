@@ -18,12 +18,12 @@ bl_info = {
     "name": "Modder Batch Tool",
     "author": "诸葛不太亮",
     "blender": (2, 93, 0),
-    "version": (1, 0),
+    "version": (1, 2),
     "description": "Utility tools to do a lot of repetitive operations automatically.",
     "warning": "",
     "wiki_url": "https://github.com/chikichikibangbang/Modder_Batch_Tool",
     "tracker_url": "https://github.com/chikichikibangbang/Modder_Batch_Tool/issues",
-    # "support": "COMMUNITY",
+    "support": "COMMUNITY",
     # "location": "View3D > Tool Shelf > Modder's Batch Tool",
     "category": "3D View"
 }

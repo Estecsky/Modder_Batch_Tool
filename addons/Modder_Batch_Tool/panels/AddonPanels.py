@@ -62,7 +62,6 @@ class UniversalFunction(bpy.types.Panel):
         row = layout.row()
         row.operator("mbt.unify_uvs", icon="OUTLINER_DATA_MESH")
 
-
 @reg_order(2)
 class MBTMHWilds(bpy.types.Panel):
     global PCOLL
@@ -87,28 +86,38 @@ class MBTMHWilds(bpy.types.Panel):
         # row.scale_y = 1.2
         # row.label(text="Make sure you have installed <RE Mesh Editor> plugin", icon="INFO")
 
+        # layout.label(text="Current MHWilds Armature:")
+        # layout.prop_search(mbt_toolpanel, "Current_MHWilds_Armature", bpy.data, "armatures")
+
         layout.label(text="Import MHWilds basic mesh")
+        row = layout.row()
+        row.prop(mbt_toolpanel, "mhwilds_convert_to_tpose")
         row = layout.row()
         row.operator("mbt.import_mhwilds_fmesh", icon="OUTLINER_OB_MESH")
         # row.operator("tool.importmhwildsmmesh", icon="OUTLINER_OB_MESH")
 
-        layout.label(text="Convert to t-pose")
-        row = layout.row()
-        row.operator("mbt.mhwilds_tpose", icon="OUTLINER_OB_ARMATURE")
+        # layout.label(text="Convert to t-pose")
+        # row = layout.row()
+        # row.operator("mbt.mhwilds_tpose", icon="OUTLINER_OB_ARMATURE")
         row = layout.row()
 
         layout.label(text="Batch absorb bones (only support t-pose)")
         row = layout.row()
         row.scale_y = 1.2
-        row.label(text="Make sure you select armature below first and then the game armature in the object mode",
+        row.label(text="Please select both the external skeleton and MHWilds skeleton, and then press absorb bones",
                   icon="ERROR")
         row = layout.row()
-        layout.prop(mbt_toolpanel, "MHWildsBoneList")
+        row.prop(mbt_toolpanel, "mhwilds_merge_facial_bones")
+        row = layout.row()
+        row.prop(mbt_toolpanel, "MHWildsBoneList")
+        row.operator("mbt.mhwilds_open_dictionary_folder", icon="FILEBROWSER")
         layout.operator("mbt.mhwilds_snapbone", icon="OUTLINER_OB_ARMATURE")
 
         # layout.label(text="Batch rename vertex groups")
         row = layout.row()
         row.operator("mbt.mhwilds_rename_vg", icon="OUTLINER_DATA_MESH")
+        # row = layout.row()
+        # row.operator("mbt.mhwilds_merge_bones")
 
         layout.label(text="Batch normalize and limit weight to 6wt")
         row = layout.row()
