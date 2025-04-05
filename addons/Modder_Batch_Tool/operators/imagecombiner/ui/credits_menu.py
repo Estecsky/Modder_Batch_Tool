@@ -7,7 +7,7 @@ from .. import globs
 
 class CreditsMenu(bpy.types.Panel):
     bl_label = 'Credits'
-    bl_idname = 'SMC_PT_Credits_Menu'
+    bl_idname = 'SMC_PT_MBT_Credits_Menu'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI' if globs.is_blender_2_80_or_newer else 'TOOLS'
     bl_category = "Modder Batch Tool"

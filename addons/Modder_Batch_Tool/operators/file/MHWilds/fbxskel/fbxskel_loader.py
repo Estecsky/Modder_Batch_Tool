@@ -19,9 +19,10 @@ def load_fbxskel(filepath, collection = None, fix_rotation=False, obj_name="", c
         file_name = file_sname[0]
 
     if collection is None:
-        master_collection = bpy.context.scene.collection
-        col = bpy.data.collections.new(file_name + ".fbxskel")
-        master_collection.children.link(col)
+        col = bpy.context.scene.collection
+        # master_collection = bpy.context.scene.collection
+        # col = bpy.data.collections.new(file_name + ".fbxskel")
+        # master_collection.children.link(col)
     else:
         col = collection
 

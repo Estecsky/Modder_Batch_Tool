@@ -7,14 +7,14 @@ from ....common.i18n.i18n import i18n
 from ....common.types.framework import reg_order
 from ..operators.imagecombiner.type_annotations import Scene
 
-class BasePanel(object):
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "Modder Batch Tool"
-
-    @classmethod
-    def poll(self, context: bpy.types.Context):
-        return context is not None
+# class BasePanel(object):
+#     bl_space_type = "VIEW_3D"
+#     bl_region_type = "UI"
+#     bl_category = "Modder Batch Tool"
+#
+#     @classmethod
+#     def poll(self, context: bpy.types.Context):
+#         return context is not None
 
 @reg_order(0)
 class MBTShowPanel(bpy.types.Panel):
@@ -51,20 +51,24 @@ class UniversalFunction(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         row = layout.row()
-        row.operator("mbt.separate_by_materials", icon="OUTLINER_DATA_MESH")
+        row.operator("mbt.separate_by_materials", icon="OUTLINER_OB_MESH")
 
         row = layout.row()
         row.operator("mbt.clean_zero_vg", icon="OUTLINER_DATA_MESH")
         row = layout.row()
         row.operator("mbt.remove_shapekeys", icon="OUTLINER_DATA_MESH")
 
-        layout.label(text="Batch delete unnecessary UVs and unify UV names")
+        # layout.label(text="Batch delete unnecessary UVs and unify UV names")
         row = layout.row()
         row.operator("mbt.unify_uvs", icon="OUTLINER_DATA_MESH")
 
+        # layout.label(text="Batch delete unnecessary UVs and unify UV names")
+        row = layout.row()
+        row.operator("mbt.merge_meshes_with_same_texture", icon="OUTLINER_OB_MESH")
+
+
 @reg_order(2)
 class MBTMHWilds(bpy.types.Panel):
-    global PCOLL
     bl_label = "MHWilds"
     bl_idname = "OBJECT_PT_MBT_MHWilds"
     bl_space_type = 'VIEW_3D'
@@ -90,15 +94,22 @@ class MBTMHWilds(bpy.types.Panel):
         # layout.prop_search(mbt_toolpanel, "Current_MHWilds_Armature", bpy.data, "armatures")
 
         layout.label(text="Import MHWilds basic mesh")
-        row = layout.row()
-        row.prop(mbt_toolpanel, "mhwilds_convert_to_tpose")
-        row = layout.row()
-        row.operator("mbt.import_mhwilds_fmesh", icon="OUTLINER_OB_MESH")
+        # row = layout.row()
+        # row.prop(mbt_toolpanel, "mhwilds_convert_to_tpose")
+        # row = layout.row()
+        # row.operator("mbt.import_mhwilds_fmesh", icon="OUTLINER_OB_MESH")
         # row.operator("tool.importmhwildsmmesh", icon="OUTLINER_OB_MESH")
 
-        # layout.label(text="Convert to t-pose")
-        # row = layout.row()
-        # row.operator("mbt.mhwilds_tpose", icon="OUTLINER_OB_ARMATURE")
+        split = layout.row(align=True)
+        row = split.row(align=True)
+        row.operator("mbt.import_mhwilds_fmesh", icon="OUTLINER_OB_MESH")
+        row = split.row(align=True)
+        row.alignment = 'RIGHT'
+        row.operator("mbt.import_mhwilds_fmesh_settings", text="", icon='MODIFIER')
+
+        layout.label(text="Convert to t-pose")
+        row = layout.row()
+        row.operator("mbt.mhwilds_tpose", icon="OUTLINER_OB_ARMATURE")
         row = layout.row()
 
         layout.label(text="Batch absorb bones (only support t-pose)")
@@ -106,8 +117,8 @@ class MBTMHWilds(bpy.types.Panel):
         row.scale_y = 1.2
         row.label(text="Please select both the external skeleton and MHWilds skeleton, and then press absorb bones",
                   icon="ERROR")
-        row = layout.row()
-        row.prop(mbt_toolpanel, "mhwilds_merge_facial_bones")
+        # row = layout.row()
+        # row.prop(mbt_toolpanel, "mhwilds_merge_facial_bones")
         row = layout.row()
         row.prop(mbt_toolpanel, "MHWildsBoneList")
         row.operator("mbt.mhwilds_open_dictionary_folder", icon="FILEBROWSER")
@@ -123,18 +134,103 @@ class MBTMHWilds(bpy.types.Panel):
         row = layout.row()
         row.operator("mbt.normalize_limit_6wt_vg", icon="OUTLINER_DATA_MESH")
 
-        layout.label(text="Batch split seam edge")
-        row = layout.row()
-        row.operator("mbt.split_seam_edge", icon="OUTLINER_DATA_MESH")
+        # layout.label(text="Batch split seam edge")
+        # row = layout.row()
+        # row.operator("mbt.split_seam_edge", icon="OUTLINER_DATA_MESH")
 
         layout.label(text="Batch rename meshes to re format")
         row = layout.row()
         row.operator("mbt.rename_mesh_to_reformat", icon="OUTLINER_DATA_MESH")
 
-        layout.label(text="Generate or export fbxskel")
-        row = layout.row()
-        row.operator("mbt.generate_fbxskel", icon="OUTLINER_OB_ARMATURE")
-        row.operator("mbt.export_fbxskel", icon="OUTLINER_OB_ARMATURE")
+        # layout.label(text="Generate or export fbxskel")
+        # row = layout.row()
+        # row.operator("mbt.generate_fbxskel", icon="OUTLINER_OB_ARMATURE")
+        # row.operator("mbt.export_fbxskel", icon="OUTLINER_OB_ARMATURE")
+
+        # layout.label(text="Set mod directory")
+        # row = layout.row()
+        # row.prop(mbt_toolpanel, "MHWildsModDirectory")
+        #
+        # layout.label(text="Export fbxskel and json for bone system")
+        # split = layout.row(align=True)
+        # row = split.row(align=True)
+        # row.operator("mbt.export_fbxskel_json", icon="OUTLINER_OB_ARMATURE")
+        # row = split.row(align=True)
+        # row.alignment = 'RIGHT'
+        # row.operator("mbt.export_fbxskel_json_settings", text="", icon='MODIFIER')
+
+
+@reg_order(3)
+class MBTMHWildsFbxskel(bpy.types.Panel):
+    bl_label = "Export fbxskel"
+    bl_idname = "OBJECT_PT_MBT_MHWilds_Fbxskel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    # bl_category = "Modder Batch Tool"
+    bl_parent_id = "OBJECT_PT_MBT_MHWilds"
+    # bl_context = "objectmode"
+    bl_options = {'DEFAULT_CLOSED'}
+
+    @classmethod
+    def poll(self, context: bpy.types.Context):
+        return context is not None
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        mbt_toolpanel = context.scene.mbt_toolpanel
+
+        box = layout.box()
+        col = box.column(align=True)
+
+        row = col.row(align=False)
+        row.scale_y = 1.2
+        row.label(text="Please perform the operations in order", icon="ERROR")
+        col.separator()
+        row = col.row(align=False);
+        row.scale_y = 0.75
+        row.label(text="1.Download and install Bone System")
+
+        col.separator()
+        row = col.row();
+        row.scale_y = 1.1
+        button = row.operator("mtb.mhwilds_bonesystem_caimogu_website")
+
+        col.separator()
+        row = col.row(align=False);
+        row.scale_y = 1.1
+        row.label(text="2.Set the mod file path")
+
+        col.separator()
+        row = col.row();
+        row.scale_y = 1.1
+        row.prop(mbt_toolpanel, "MHWildsModDirectory")
+
+        col.separator()
+        row = col.row(align=False);
+        row.scale_y = 1.1
+        row.label(text="3.Set file name")
+
+        col.separator()
+        row = col.row();
+        row.scale_y = 1.1
+        row.prop(mbt_toolpanel, "MHWildsFbxskelName")
+
+        col.separator()
+        row = col.row(align=False);
+        row.scale_y = 1.1
+        row.label(text="4.Export fbxskel and json")
+
+        col.separator()
+        row = col.row();
+        split = col.row(align=True)
+        row = split.row(align=True)
+        row.scale_y = 1.1
+        row.operator("mbt.export_fbxskel_json", icon="OUTLINER_OB_ARMATURE")
+        row = split.row(align=True)
+        row.alignment = 'RIGHT'
+        row.scale_y = 1.1
+        row.operator("mbt.export_fbxskel_json_settings", text="", icon='MODIFIER')
 
 
 
@@ -142,7 +238,7 @@ DIR_PATH = os.path.dirname(os.path.split(os.path.abspath(__file__))[0])
 ICONS_PATH = os.path.join(DIR_PATH, "icons")
 PCOLL = None
 preview_collections = {}
-@reg_order(3)
+@reg_order(4)
 class MBTCredits(bpy.types.Panel):
     global PCOLL
     bl_label = "Credits"

@@ -43,7 +43,7 @@ def register() -> None:
             ('STRICTCUST', 'Strict Custom', 'Combined image has exact custom width and height'),
         ],
         description='Select combined image size',
-        default='PO2',
+        default='QUAD',
     )
     bpy.types.Scene.smc_size_width = IntProperty(
         name='Max width (px)',

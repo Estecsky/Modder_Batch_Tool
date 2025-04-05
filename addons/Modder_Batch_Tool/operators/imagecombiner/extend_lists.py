@@ -47,7 +47,7 @@ class SMC_UL_Combine_List(bpy.types.UIList):
         else:
             icon = 'CHECKBOX_DEHLT' if globs.is_blender_2_80_or_newer else 'LAYER_USED'
         row.operator('smc.combine_switch', text='', icon=icon).list_id = index
-        row.operator('smc.property_menu', text='',
+        row.operator('mbt.property_menu', text='',
                      icon='PREFERENCES' if globs.is_blender_2_80_or_newer else 'SCRIPT').list_id = index
 
     def filter_items(self, context: bpy.types.Context, data: Any, propname: str) -> Tuple[List[int], List[int]]:

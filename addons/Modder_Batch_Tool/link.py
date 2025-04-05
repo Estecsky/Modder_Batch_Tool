@@ -38,3 +38,13 @@ class GithubWebsite(bpy.types.Operator):
     def execute(self, context):
         webbrowser.open("https://github.com/chikichikibangbang/Modder_Batch_Tool")
         return {'FINISHED'}
+
+class MHWildsBoneSystemCaimoguWebsite(bpy.types.Operator):
+    bl_idname = "mtb.mhwilds_bonesystem_caimogu_website"
+    bl_label = "Download Bone System"
+    bl_description = "By clicking, you will jump to the Bone System post page on caimogu"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        webbrowser.open("https://www.caimogu.cc/post/1937594.html")
+        return {'FINISHED'}

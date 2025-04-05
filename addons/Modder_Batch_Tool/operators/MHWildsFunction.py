@@ -1,3 +1,5 @@
+import json
+
 import bpy
 import pathlib
 import importlib
@@ -32,6 +34,7 @@ FemaleMesh = os.path.join(os.path.dirname(os.path.split(os.path.abspath(__file__
 class importMHWildsfmesh(bpy.types.Operator):
     bl_idname = "mbt.import_mhwilds_fmesh"
     bl_label = "female mesh"
+    bl_description = "Import MHWilds full-body nude model of female.\nThe imported model will be placed in a new collection.\nYou can click the wrench icon on the right to adjust the import settings"
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
@@ -51,6 +54,10 @@ class importMHWildsfmesh(bpy.types.Operator):
         # bpy.context.active_bone.use_connect = False
         # bpy.data.armatures[ArmatureName].edit_bones.active = bpy.data.armatures[ArmatureName].edit_bones["root"]
         # bpy.context.active_bone.tail.z = 0.01
+
+        if bpy.context.scene.mbt_toolpanel.mhwilds_merge_facial_bones == True:
+            Merge_MHWilds_Facial_Bones(ArmatureName)
+
         for bone in ArmatureObj.data.edit_bones:
             bone.length = 0.1
         bpy.ops.object.mode_set(mode='OBJECT')
@@ -63,17 +70,46 @@ class importMHWildsfmesh(bpy.types.Operator):
         self.report({'INFO'}, 'import mesh completed')
         return {'FINISHED'}
 
+class importMHWildsfmesh_Settings(bpy.types.Operator):
+    bl_label = "import settings"
+    bl_description = "Settings for importing model"
+    bl_idname = "mbt.import_mhwilds_fmesh_settings"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    def check(self, context):
+        # Important for changing options
+        return True
+
+    def draw(self, context):
+        scene = context.scene
+        mbt_toolpanel = context.scene.mbt_toolpanel
+
+        layout = self.layout
+        col = layout.column(align=True)
+
+        row = col.row(align=True)
+        row.prop(mbt_toolpanel, "mhwilds_convert_to_tpose")
+        row = col.row(align=True)
+        row.prop(mbt_toolpanel, "mhwilds_merge_facial_bones")
+
 
 class MHWildstpose(bpy.types.Operator):
     bl_idname = "mbt.mhwilds_tpose"
     bl_label = "convert to t-pose"
+    bl_description = "Convert MHWilds character armature to t-pose.\nConsidering some common bone names, this can also be applied to npcs"
     bl_options = {'REGISTER', 'UNDO'}
 
-    # @classmethod
-    # def poll(cls, context):
-    #     if bpy.context.selected_objects is not None:
-    #         for obj in bpy.context.selected_objects:
-    #             return obj.type == "ARMATURE"
+    @classmethod
+    def poll(cls, context):
+        if bpy.context.selected_objects is not None:
+            for obj in bpy.context.selected_objects:
+                return obj.type == "ARMATURE"
 
     def execute(self, context):
         bone_list = ['L_UpperArm', 'L_Forearm', 'L_Hand', 'L_HandRZ_HJ_00', 'L_IndexF1', 'L_IndexF2', 'L_IndexF3',
@@ -135,6 +171,9 @@ class MHWildstpose(bpy.types.Operator):
 
         bpy.ops.object.mode_set(mode='OBJECT')
         if ArmatureObj.children:
+            #若有某些子级网格对象在当前视图层为隐藏状态，则强制将其设为显示状态
+            for child in ArmatureObj.children:
+                child.hide_set(False)
             bpy.ops.object.select_grouped(type='CHILDREN_RECURSIVE', extend=True)
             bpy.ops.object.convert(target='MESH')
 
@@ -146,17 +185,20 @@ class MHWildstpose(bpy.types.Operator):
 
 
         if ArmatureObj.children:
+            # #若有某些子级网格对象在当前视图层为隐藏状态，则强制将其设为显示状态
+            # for child in ArmatureObj.children:
+            #     child.hide_set(False)
             bpy.ops.object.select_hierarchy(direction='CHILD', extend=False)
             modifier = bpy.context.active_object.modifiers.new(name="", type='ARMATURE')
             modifier.object = ArmatureObj
             bpy.ops.object.make_links_data(type='MODIFIERS')
             bpy.ops.object.select_hierarchy(direction='PARENT', extend=False)
-            bpy.ops.object.mode_set(mode='OBJECT')
+            # bpy.ops.object.mode_set(mode='OBJECT')
 
         bpy.ops.object.select_hierarchy(direction='CHILD', extend=True)
         bpy.context.view_layer.objects.active = ArmatureObj
 
-        # self.report({'INFO'}, 'conversion completed')
+        self.report({'INFO'}, 'conversion completed')
         return {'FINISHED'}
 
 class MHWildsOpenDictionaryFolder(bpy.types.Operator):
@@ -170,7 +212,7 @@ class MHWildsOpenDictionaryFolder(bpy.types.Operator):
         return {'FINISHED'}
 
 
-def Merge_MHWilds_Facial_Bones(ArmatureName, name_list):
+def Merge_MHWilds_Facial_Bones(ArmatureName):
 
     merge_bone_list = ['HeadAll_SCL', 'Ear_SCL', 'Head_SCL', 'C_ForeHead_LOD02', 'L_ForeHead_LOD01',
                        'R_ForeHead_LOD01', 'C_EyeBrow_LOD02', 'L_BetweenEyeBrow_LOD01', 'R_BetweenEyeBrow_LOD01',
@@ -248,10 +290,10 @@ def Merge_MHWilds_Facial_Bones(ArmatureName, name_list):
 
     bpy.ops.armature.select_all(action='DESELECT')
     for mergebone in merge_bone_list:
-        if mergebone in name_list:
-            bpy.data.armatures[ArmatureName].edit_bones.active = bpy.data.armatures[ArmatureName].edit_bones[
-                mergebone]
-            bpy.ops.object.select_pattern(pattern=mergebone, case_sensitive=False, extend=True)
+        # if mergebone in name_list:
+        bpy.data.armatures[ArmatureName].edit_bones.active = bpy.data.armatures[ArmatureName].edit_bones[
+            mergebone]
+        bpy.ops.object.select_pattern(pattern=mergebone, case_sensitive=False, extend=True)
 
     armature = bpy.context.object
 
@@ -273,6 +315,9 @@ def Merge_MHWilds_Facial_Bones(ArmatureName, name_list):
 class MHWildssnapbone(bpy.types.Operator):
     bl_idname = "mbt.mhwilds_snapbone"
     bl_label = "absorb bones"
+    bl_description = "Absorb each bone in the game skeleton to the corresponding bone position in the external model skeleton." \
+                     "\nSome bones will undergo additional position corrections after adsorption." \
+                     "\nThe physical bones will also be merged into the parent"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -293,11 +338,17 @@ class MHWildssnapbone(bpy.types.Operator):
         file_name, file_extension = os.path.splitext(os.path.basename(enumValue))
 
         preset_module = importlib.import_module(f"..file.MHWilds.bonenamelist.{file_name}", package=__name__)
+
+        if "preset_module" in locals():
+            importlib.reload(preset_module)
+
         fixed_name_list = preset_module.snap_bone_fixed_name_list
         rename_name_list = preset_module.rename_vg_fixed_name_list
 
+
         # 需要修正位置的骨骼
         fix_neck_bone = ['Neck_1', 'HeadRX_HJ_01', 'Neck_1_HJ_00']
+        fix_spine0_bone = ['Spine_0', 'Spine_0_HJ_00']
         fix_spine2_bone = ['Spine_2', 'Spine_2_HJ_00']
         fix_shin_bone = ['L_Shin', 'R_Shin']
         fix_instep_bone = ['L_Instep', 'R_Instep']
@@ -329,7 +380,11 @@ class MHWildssnapbone(bpy.types.Operator):
                 #获取并保存复制骨架中所有骨骼的名称
                 name_other = [bone.name for bone in armature_other.data.bones]
                 #用字典中的几个骨骼名来判定选择的字典是否匹配当前选中的外部骨架
-                if rename_name_list[0][0] in name_other and rename_name_list[1][0] in name_other and rename_name_list[2][0] in name_other and rename_name_list[4][0] in name_other and rename_name_list[5][0] in name_other and rename_name_list[6][0] in name_other:
+                if rename_name_list[0][0] in name_other and rename_name_list[1][0] in name_other and rename_name_list[2][0] in name_other and rename_name_list[4][0] in name_other and rename_name_list[6][0] in name_other:
+                    for name_pair in rename_name_list:
+                        if name_pair[0] in name_other:
+                            name_other.remove(name_pair[0])
+
                     #复制一个外部骨架对象出来用于吸附
                     armature_other_copy = armature_other.copy()
                     armature_other_copy.data = armature_other.data.copy()
@@ -351,6 +406,19 @@ class MHWildssnapbone(bpy.types.Operator):
                     name_in = [bone.name for bone in bones]
 
                     bpy.ops.object.mode_set(mode='EDIT')
+
+                    for bone_name in rename_name_list:
+                        bone1_name, bone2_name = bone_name
+                        if bone1_name in name_in and bone2_name in name_in:
+                            bpy.data.armatures[ArmatureName].edit_bones.active = bpy.data.armatures[ArmatureName].edit_bones[
+                                bone2_name]
+                            bpy.context.object.data.use_mirror_x = False
+                            bpy.ops.armature.select_all(action='DESELECT')
+                            bpy.ops.object.select_pattern(pattern=bone2_name, case_sensitive=False, extend=True)
+                            bpy.ops.object.select_pattern(pattern=bone1_name, case_sensitive=False, extend=True)
+                            bpy.ops.armature.parent_set(type='OFFSET')
+                            bpy.ops.armature.select_all(action='DESELECT')
+
                     for bone_name in fixed_name_list:
                         bone1_name, bone2_name = bone_name
                         #仅当字典中的两列骨骼名都存在于合并后的骨架中时才进行吸附操作
@@ -409,6 +477,11 @@ class MHWildssnapbone(bpy.types.Operator):
                         bone1 = bpy.data.armatures[ArmatureName].edit_bones['L_Foot']
                         bone2 = bpy.data.armatures[ArmatureName].edit_bones['L_Toe']
 
+                        bone2_length = (bone2.tail - bone2.head).length
+                        bone2.head.z = 0.019999
+                        direction = (bone2.tail - bone2.head).normalized()
+                        bone2.tail = bone2.head + direction * bone2_length
+
                     # if bone1 and bone2:
                         center_x = (bone1.head.x + bone2.head.x) / 2
                         center_y = (bone1.head.y + bone2.head.y) / 2
@@ -425,6 +498,11 @@ class MHWildssnapbone(bpy.types.Operator):
                     if 'R_Foot' in name_in and 'R_Toe' in name_in:
                         bone1 = bpy.data.armatures[ArmatureName].edit_bones['R_Foot']
                         bone2 = bpy.data.armatures[ArmatureName].edit_bones['R_Toe']
+
+                        bone2_length = (bone2.tail - bone2.head).length
+                        bone2.head.z = 0.019999
+                        direction = (bone2.tail - bone2.head).normalized()
+                        bone2.tail = bone2.head + direction * bone2_length
 
                     # if bone1 and bone2:
                         center_x = (bone1.head.x + bone2.head.x) / 2
@@ -446,13 +524,31 @@ class MHWildssnapbone(bpy.types.Operator):
                             bone.head.z = bone.head.z - 0.01
                             bone.tail.z = bone.tail.z - 0.01
 
-                    for bone_name in name_in:
-                        if bone_name not in name_ori:
-                            bpy.data.armatures[ArmatureName].edit_bones.active = bpy.data.armatures[ArmatureName].edit_bones[bone_name]
-                            bpy.ops.armature.delete()
+                    if 'Hip' in name_in:
+                        hip_bone = bpy.data.armatures[ArmatureName].edit_bones['Hip']
+                        center_point = (hip_bone.head.x, hip_bone.head.y, hip_bone.head.z)
 
-                    if bpy.context.scene.mbt_toolpanel. mhwilds_merge_facial_bones == True:
-                        Merge_MHWilds_Facial_Bones(ArmatureName, name_ori)
+                        # 修正骨骼，Spine_0和Spine_0_HJ_00应该与Hip在相同的位置，否则骑乘鹭鹰龙时屁股会顶起来
+                        for fs0b in fix_spine0_bone:
+                            if fs0b in name_in:
+                                bone = bpy.data.armatures[ArmatureName].edit_bones[fs0b]
+                                original_length = (bone.tail - bone.head).length
+                                direction = (bone.tail - bone.head).normalized()
+                                bone.head = center_point
+                                bone.tail = bone.head + direction * original_length
+
+                    # for bone_name in name_in:
+                    #     if bone_name not in name_ori:
+                    #         bpy.data.armatures[ArmatureName].edit_bones.active = bpy.data.armatures[ArmatureName].edit_bones[bone_name]
+                    #         bpy.ops.armature.delete()
+
+                    for bone_name in name_in:
+                        if bone_name not in name_ori and bone_name not in name_other:
+                            bone_to_delete = bpy.data.armatures[ArmatureName].edit_bones[bone_name]
+                            bpy.data.armatures[ArmatureName].edit_bones.remove(bone_to_delete)
+
+                    # if bpy.context.scene.mbt_toolpanel. mhwilds_merge_facial_bones == True:
+                    #     Merge_MHWilds_Facial_Bones(ArmatureName, name_ori)
 
                     bpy.ops.object.mode_set(mode='OBJECT')
                 #若选择的字典不匹配当前选中的外部骨架，则报错
@@ -468,19 +564,32 @@ class MHWildssnapbone(bpy.types.Operator):
 class MHWildsrenamevg(bpy.types.Operator):
     bl_idname = "mbt.mhwilds_rename_vg"
     bl_label = "rename vertex group"
+    bl_description = "Change the vertex group name of the external model to the corresponding game model vertex group name"
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
-        if bpy.context.selected_objects is not None:
-            for obj in bpy.context.selected_objects:
-                return obj.type == "MESH"
+        # 检查是否有选中的对象
+        if context.selected_objects:
+            # 遍历所有选中的对象
+            for obj in context.selected_objects:
+                # 如果发现任何一个对象不是网格类型，返回 False
+                if obj.type != "MESH":
+                    return False
+            # 如果所有选中的对象都是网格类型，返回 True
+            return True
+        # 如果没有选中的对象，返回 False
+        return False
 
     def execute(self, context):
         enumValue = bpy.context.scene.mbt_toolpanel.MHWildsBoneList
         file_name, file_extension = os.path.splitext(os.path.basename(enumValue))
 
         preset_module = importlib.import_module(f"..file.MHWilds.bonenamelist.{file_name}", package=__name__)
+
+        if "preset_module" in locals():
+            importlib.reload(preset_module)
+
         fixed_name_list = preset_module.rename_vg_fixed_name_list
 
         for obj in bpy.context.selected_objects:
@@ -502,14 +611,23 @@ class MHWildsrenamevg(bpy.types.Operator):
 class RenameMeshToREFormat(bpy.types.Operator):
     bl_label = "rename meshes"
     bl_idname = "mbt.rename_mesh_to_reformat"
+    bl_description = "Change the mesh name to a format that conforms to the re engine, such as Group_0_Sub_0__xxx.\nIt will rename each mesh according to the first material name"
     bl_options = {'REGISTER', 'UNDO'}
     # bl_description = "Renames selected meshes to RE mesh naming scheme (Example: Group_0_Sub_0__Shirts_Mat)"
 
     @classmethod
     def poll(cls, context):
-        if bpy.context.selected_objects is not None:
-            for obj in bpy.context.selected_objects:
-                return obj.type == "MESH"
+        # 检查是否有选中的对象
+        if context.selected_objects:
+            # 遍历所有选中的对象
+            for obj in context.selected_objects:
+                # 如果发现任何一个对象不是网格类型，返回 False
+                if obj.type != "MESH":
+                    return False
+            # 如果所有选中的对象都是网格类型，返回 True
+            return True
+        # 如果没有选中的对象，返回 False
+        return False
 
     def execute(self, context):
         groupIndexDict = dict()
@@ -584,6 +702,7 @@ FemaleFbxskelMesh = os.path.join(os.path.dirname(os.path.split(os.path.abspath(_
 class Generatefbxskel(bpy.types.Operator):
     bl_idname = "mbt.generate_fbxskel"
     bl_label = "generate fbxskel"
+    bl_description = ""
     bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
@@ -618,54 +737,55 @@ class Generatefbxskel(bpy.types.Operator):
         obj = bpy.context.active_object
         ArmatureName0 = obj.name
 
-        if obj.type == 'ARMATURE' and obj.get("MBT_Armature_Type") == "MHWilds":
-            bpy.ops.object.select_all(action='DESELECT')
+        # if obj.type == 'ARMATURE' and obj.get("MBT_Armature_Type") == "MHWilds":
+        bpy.ops.object.select_all(action='DESELECT')
 
-            # bpy.ops.import_scene.fbx(filepath=FemaleFbxskelMesh, use_custom_props=True, force_connect_children=False)
-            ArmatureObj = load_fbxskel(FemaleFbxskelMesh, collection=None, fix_rotation=True)
-            ArmatureObj.select_set(True)
-            # ArmatureObj = bpy.context.active_object
-            ArmatureName1 = ArmatureObj.name
-            ArmatureName = ArmatureObj.data.name
-            bpy.ops.object.mode_set(mode='EDIT')
-            # bpy.data.armatures[ArmatureName].edit_bones.active = bpy.data.armatures[ArmatureName].edit_bones["COG"]
-            # bpy.context.active_bone.use_connect = False
-            for bone in ArmatureObj.data.edit_bones:
-                bone.length = 0.1
-            bpy.ops.object.mode_set(mode='OBJECT')
-            bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
+        # bpy.ops.import_scene.fbx(filepath=FemaleFbxskelMesh, use_custom_props=True, force_connect_children=False)
+        ArmatureObj = load_fbxskel(FemaleFbxskelMesh, collection=None, fix_rotation=True)
+        ArmatureObj.select_set(True)
+        # ArmatureObj = bpy.context.active_object
+        ArmatureName1 = ArmatureObj.name
+        ArmatureName = ArmatureObj.data.name
+        bpy.ops.object.mode_set(mode='EDIT')
+        # bpy.data.armatures[ArmatureName].edit_bones.active = bpy.data.armatures[ArmatureName].edit_bones["COG"]
+        # bpy.context.active_bone.use_connect = False
+        for bone in ArmatureObj.data.edit_bones:
+            bone.length = 0.1
+        bpy.ops.object.mode_set(mode='OBJECT')
+        bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
 
-            copy_bone_matrices(ArmatureName0, ArmatureName1)
+        copy_bone_matrices(ArmatureName0, ArmatureName1)
 
-            ArmatureName = bpy.context.active_object.data.name
-            obj = bpy.context.active_object.data.bones
-            bpy.ops.object.mode_set(mode='EDIT')
+        ArmatureName = bpy.context.active_object.data.name
+        obj = bpy.context.active_object.data.bones
+        bpy.ops.object.mode_set(mode='EDIT')
 
-            for n in fixed_location_list:
-                bpy.data.armatures[ArmatureName].edit_bones.active = bpy.data.armatures[ArmatureName].edit_bones[n[0]]
-                bpy.context.object.data.use_mirror_x = False
-                bpy.ops.armature.select_all(action='DESELECT')
-                bpy.ops.object.select_pattern(pattern=n[0], case_sensitive=False, extend=True)
-                bpy.ops.object.select_pattern(pattern=n[1], case_sensitive=False, extend=True)
-                bpy.context.area.type = 'VIEW_3D'
-                bpy.ops.view3d.snap_selected_to_active()
-                # bpy.context.area.type = 'TEXT_EDITOR'
-                bpy.ops.armature.select_all(action='DESELECT')
-                # print(n[0],n[1])
-            bpy.ops.object.mode_set(mode='OBJECT')
+        for n in fixed_location_list:
+            bpy.data.armatures[ArmatureName].edit_bones.active = bpy.data.armatures[ArmatureName].edit_bones[n[0]]
+            bpy.context.object.data.use_mirror_x = False
+            bpy.ops.armature.select_all(action='DESELECT')
+            bpy.ops.object.select_pattern(pattern=n[0], case_sensitive=False, extend=True)
+            bpy.ops.object.select_pattern(pattern=n[1], case_sensitive=False, extend=True)
+            bpy.context.area.type = 'VIEW_3D'
+            bpy.ops.view3d.snap_selected_to_active()
+            # bpy.context.area.type = 'TEXT_EDITOR'
+            bpy.ops.armature.select_all(action='DESELECT')
+            # print(n[0],n[1])
+        bpy.ops.object.mode_set(mode='OBJECT')
 
-        else:
-            showErrorMessageBox(
-                        "Please select the MHWilds skeleton generated by batch tool to generate fbxskel.")
+        # else:
+        #     showErrorMessageBox(
+        #                 "Please select the MHWilds skeleton generated by batch tool to generate fbxskel.")
 
 
-        self.report({'INFO'}, 'generation completed')
+        # self.report({'INFO'}, 'generation completed')
         return {'FINISHED'}
 
 
 class Exportfbxskel(bpy.types.Operator, ExportHelper):
     bl_idname = "mbt.export_fbxskel"
     bl_label = 'export fbxskel'
+    bl_description = ""
     bl_options = {'PRESET', "REGISTER", "UNDO"}
     filename_ext = ".7"
     # filter_glob: bpy.props.StringProperty(default="*.fbxskel", options={'HIDDEN'})
@@ -680,7 +800,7 @@ class Exportfbxskel(bpy.types.Operator, ExportHelper):
         fbxskel_armature = bpy.context.active_object
         if ".fbxskel" in fbxskel_armature.name:
             self.filepath = fbxskel_armature.name.split(".fbxskel")[0] + ".fbxskel.7"
-            print(self.filepath)
+            # print(self.filepath)
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
@@ -705,3 +825,233 @@ class Exportfbxskel(bpy.types.Operator, ExportHelper):
             logger.info("Export to " + self.filepath + " completed! ")
             self.report({"INFO"}, "export completed")
         return {"FINISHED"}
+
+
+# class Exportfbxskeljson(bpy.types.Operator, ExportHelper):
+#     bl_idname = "mbt.export_fbxskel_json"
+#     bl_label = 'export fbxskel and json'
+#     bl_options = {'PRESET', "REGISTER", "UNDO"}
+#     filename_ext = ".json"
+#     # filter_glob: bpy.props.StringProperty(default="*.fbxskel", options={'HIDDEN'})
+#
+#     @classmethod
+#     def poll(cls, context):
+#         if bpy.context.selected_objects is not None and len(bpy.context.selected_objects) == 1:
+#             for obj in bpy.context.selected_objects:
+#                 return obj.type == "ARMATURE"
+#
+#     def invoke(self, context, event):
+#         fbxskel_armature = bpy.context.active_object
+#         if ".fbxskel" in fbxskel_armature.name:
+#             self.filepath = fbxskel_armature.name.split(".fbxskel")[0]
+#             print(self.filepath)
+#         context.window_manager.fileselect_add(self)
+#         return {'RUNNING_MODAL'}
+#
+#     def execute(self, context):
+#         # 获取当前激活的骨架
+#         armature = bpy.context.active_object
+#
+#         if armature and armature.type == 'ARMATURE':
+#             armature_matrix = armature.matrix_world
+#             rot4 = Matrix.Rotation(math.radians(-90.0), 4, 'X')
+#             scale_mat = Matrix.LocRotScale(None, None, armature_matrix.to_scale())
+#             # 用于存储骨骼信息的列表
+#             bones_infos = []
+#
+#             mbt_toolpanel = context.scene.mbt_toolpanel
+#             settings_infos = {
+#                 "HideFace": mbt_toolpanel.mhwilds_json_hide_face,
+#                 "HideHair": mbt_toolpanel.mhwilds_json_hide_hair,
+#                 "HideSlinger": mbt_toolpanel.mhwilds_json_hide_slinger,
+#                 "BindFace": mbt_toolpanel.mhwilds_json_bind_facial,
+#                 "BindPart": mbt_toolpanel.mhwilds_json_bind_part
+#             }
+#             bones_infos.append(settings_infos)
+#
+#             # 遍历骨架中的每个骨骼
+#             for bone in armature.data.bones:
+#
+#                 if bone.parent is None:
+#                     local_mat = rot4 @ (armature_matrix @ bone.matrix_local)
+#                 else:
+#                     local_mat = scale_mat @ (bone.parent.matrix_local.inverted() @ bone.matrix_local)
+#
+#                 loc, rot, scl = local_mat.decompose()
+#
+#                 # 保存骨骼信息到字典
+#                 bone_info = {
+#                     "Name": bone.name,
+#                     "Position": {
+#                         "x": loc[0],
+#                         "y": loc[1],
+#                         "z": loc[2]
+#                     },
+#                     "Rotation": {
+#                         "w": rot[0],
+#                         "x": rot[1],
+#                         "y": rot[2],
+#                         "z": rot[3]
+#                     },
+#                     "Scale": {
+#                         "x": scl[0],
+#                         "y": scl[1],
+#                         "z": scl[2]
+#                     }
+#                 }
+#
+#                 # 将骨骼信息添加到列表中
+#                 bones_infos.append(bone_info)
+#
+#             # # 定义输出文件路径
+#             # output_file_path = os.path.join(bpy.path.abspath(
+#             #     "F:\SteamLibrary\steamapps\common\MonsterHunterWilds\FluffyModManager\Games\MonsterHunterWilds\Mods"),
+#             #                                 "bones_info.json")
+#
+#             # 将数据写入 JSON 文件
+#             with open(self.filepath, "w") as json_file:
+#                 json.dump(bones_infos, json_file, indent=4)
+#
+#             print(f"骨骼数据已保存到: {self.filepath}")
+#         else:
+#             print("请确保选择了一个骨架对象。")
+#         self.report({"INFO"}, "export completed")
+#         return {"FINISHED"}
+
+class Exportfbxskeljson(bpy.types.Operator):
+    bl_idname = "mbt.export_fbxskel_json"
+    bl_label = 'export fbxskel and json'
+    bl_description = "Export both fbxskel and json files.\nPlease select the MHWilds character armature before exporting.\nYou can click the wrench icon on the right to adjust the export settings"
+    bl_options = {'PRESET'}
+
+    @classmethod
+    def poll(cls, context):
+        if bpy.context.selected_objects is not None and len(bpy.context.selected_objects) == 1:
+            for obj in bpy.context.selected_objects:
+                return obj.type == "ARMATURE"
+
+    def execute(self, context):
+        ori_armature = bpy.context.active_object
+
+        bpy.ops.mbt.generate_fbxskel()
+
+        armature = bpy.context.active_object
+
+        scene = context.scene
+        mbt_toolpanel = context.scene.mbt_toolpanel
+
+        if mbt_toolpanel.MHWildsModDirectory != "":
+            fbxskel_path = os.path.join(mbt_toolpanel.MHWildsModDirectory, 'natives\stm\BoneSystem')
+            # print(fbxskel_path)
+            json_path = os.path.join(mbt_toolpanel.MHWildsModDirectory, 'reframework\data\BoneSystem')
+
+
+            if not os.path.exists(fbxskel_path):
+                # 创建路径
+                os.makedirs(fbxskel_path)
+                print(f"File path {fbxskel_path} has been created.")
+            else:
+                print(f"File path {fbxskel_path} already exists.")
+
+            if mbt_toolpanel.MHWildsFbxskelName != "":
+
+                file_path = os.path.join(fbxskel_path, mbt_toolpanel.MHWildsFbxskelName + ".fbxskel.7")
+                # print(file_path)
+
+                selected_objects = bpy.context.selected_objects
+                beware = False
+                try:
+                    bone_infos, beware_export = export_fbxskel(selected_objects)
+                    data, beware_write = write_fbxskel(bone_infos)
+                    with open(file_path, "wb") as file_out:
+                        file_out.write(data)
+                    beware = beware_export or beware_write
+                except Exception as e:
+                    self.report({"ERROR"}, "Could not export fbxskel, reason = " + str(e))
+                    import traceback
+                    traceback.print_exc()
+                    return {"CANCELLED"}
+                if beware:
+                    logger.warning(
+                        "Export to " + file_path + " done, but warning were generated: make sure everything went correctly by checking the system console, found in Window->Toggle System Console")
+                    self.report({"WARNING"},
+                                "Export done, but warning were generated: make sure everything went correctly by checking the system console, found in Window->Toggle System Console")
+                else:
+                    logger.info("Export to " + file_path + " completed!")
+
+                    # self.report({"INFO"}, "export completed")
+
+                if not os.path.exists(json_path):
+                    # 创建路径
+                    os.makedirs(json_path)
+                    print(f"File path {json_path} has been created.")
+                else:
+                    print(f"File path {json_path} already exists.")
+
+                file_path = os.path.join(json_path, mbt_toolpanel.MHWildsFbxskelName + ".json")
+
+                settings_infos = {
+                    "HideFace": mbt_toolpanel.mhwilds_json_hide_face,
+                    "HideHair": mbt_toolpanel.mhwilds_json_hide_hair,
+                    "HideSlinger": mbt_toolpanel.mhwilds_json_hide_slinger,
+                    "BindFace": mbt_toolpanel.mhwilds_json_bind_facial,
+                    "BindPart": int(mbt_toolpanel.mhwilds_json_bind_part),
+                    "FbxPath": mbt_toolpanel.MHWildsFbxskelName
+                }
+
+                # 将数据写入 JSON 文件
+                with open(file_path, "w") as json_file:
+                    json.dump(settings_infos, json_file, indent=4)
+
+                logger.info("Export to " + file_path + " completed!")
+
+                bpy.data.objects.remove(armature)
+                bpy.context.view_layer.objects.active = ori_armature
+                ori_armature.select_set(True)
+                self.report({"INFO"}, "export completed")
+            else:
+                showErrorMessageBox(
+                    "The file name is not set yet.")
+
+        else:
+            showErrorMessageBox(
+                "The mod file path is not set yet.")
+
+        return {"FINISHED"}
+
+
+
+class Exportfbxskeljson_Settings(bpy.types.Operator):
+    bl_idname = "mbt.export_fbxskel_json_settings"
+    bl_label = "export settings"
+    bl_description = "Settings for exporting json"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    def execute(self, context):
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self)
+
+    def check(self, context):
+        # Important for changing options
+        return True
+
+    def draw(self, context):
+        mbt_toolpanel = context.scene.mbt_toolpanel
+        layout = self.layout
+
+        row = layout.row()
+        col_left = row.column()
+        col_right = row.column()
+
+        col_left.label(text="hide options:")
+        col_left.prop(mbt_toolpanel, "mhwilds_json_hide_face")
+        col_left.prop(mbt_toolpanel, "mhwilds_json_hide_hair")
+        col_left.prop(mbt_toolpanel, "mhwilds_json_hide_slinger")
+
+        col_right.label(text="bind options:")
+        col_right.prop(mbt_toolpanel, "mhwilds_json_bind_facial")
+        if mbt_toolpanel.mhwilds_json_bind_facial == True:
+            col_right.label(text="bind part:")
+            col_right.prop(mbt_toolpanel, "mhwilds_json_bind_part", text="")

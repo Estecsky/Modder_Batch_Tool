@@ -29,7 +29,8 @@ class MaterialMenu(bpy.types.Panel):
     @staticmethod
     def _materials_list(col: bpy.types.UILayout, scn: Scene, layout: bpy.types.UIList) -> None:
         col.scale_y = 1.2
-        col.label(text="this modified combiner doesn't combine materials, so you can still seperate by materials", icon="INFO")
+        col.label(text="This modified combiner doesn't combine materials, so you can still seperate by materials", icon="INFO")
+        col.label(text="Please don't merge all textures into one texture with a very large resolution", icon="ERROR")
         col.label(text='materials to combine:')
         col.template_list('SMC_UL_Combine_List', 'combine_list', scn, 'smc_ob_data',
                           scn, 'smc_ob_data_id', rows=12, type='DEFAULT')
