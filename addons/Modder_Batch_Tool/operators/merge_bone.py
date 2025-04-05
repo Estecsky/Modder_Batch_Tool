@@ -67,7 +67,7 @@ def merge_weights(armature, parenting_list):
     # Common.switch('OBJECT')
     # Merge the weights on the meshes
     for mesh in get_meshes_objects(armature_name=armature.name,
-                                   visible_only=bpy.context.scene.merge_visible_meshes_only):
+                                   visible_only=False):
         set_active(mesh)
 
         for bone, parent in parenting_list.items():
