@@ -88,5 +88,5 @@ class MBTToolPanelPG(bpy.types.PropertyGroup):
         name="bind part",
         description="",
         items=[("1", "helm", ""), ("2", "body", "")],
-        default=1,
+        default=0,
     )
