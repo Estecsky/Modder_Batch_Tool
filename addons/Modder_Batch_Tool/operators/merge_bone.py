@@ -13,7 +13,7 @@ def set_active(obj, skip_sel=False):
 
 def select(obj, sel=True):
     if obj is not None:
-        hide(obj, False)
+        # hide(obj, False)
         obj.select_set(sel)
 
 def hide(obj, val=True):
@@ -83,11 +83,10 @@ def merge_weights(armature, parenting_list):
     switch('EDIT')
 
     # Delete merged bones
-    if not bpy.context.scene.keep_merged_bones:
-        for bone in parenting_list.keys():
-            edited_bone = armature.data.edit_bones.get(bone)
-            if edited_bone is not None:
-                armature.data.edit_bones.remove(edited_bone)
+    for bone in parenting_list.keys():
+        edited_bone = armature.data.edit_bones.get(bone)
+        if edited_bone is not None:
+            armature.data.edit_bones.remove(edited_bone)
 
 def is_hidden(obj):
     if hasattr(obj, 'hide_get'):

@@ -1,6 +1,21 @@
 import bpy
-from .merge_bone import get_objects, get_armature, set_active
+from .merge_bone import get_objects, get_armature
 
+def set_active(obj, skip_sel=False):
+    if not skip_sel:
+        select(obj)
+        bpy.context.view_layer.objects.active = obj
+
+def select(obj, sel=True):
+    if obj is not None:
+        hide(obj, False)
+        obj.select_set(sel)
+
+def hide(obj, val=True):
+    if hasattr(obj, 'hide_set'):
+        obj.hide_set(val)
+    elif hasattr(obj, 'hide'):
+        obj.hide = val
 
 def has_shapekeys(mesh):
     if not hasattr(mesh.data, 'shape_keys'):
